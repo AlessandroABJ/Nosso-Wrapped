@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nosso Wrapped</title>
+    <style>
+        /* ESTILOS VISUAIS */
+        body {
+            margin: 0; padding: 0; background-color: #f0f0f0;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            display: flex; justify-content: center;
+        }
+        .app-container {
+            width: 100%; max-width: 400px;
+            background: linear-gradient(180deg, #5c1616 0%, #121212 40%, #121212 100%);
+            min-height: 100vh; color: white; padding: 20px; box-sizing: border-box;
+        }
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 14px; font-weight: bold; margin-bottom: 20px;
+        }
+        .album-art {
+            width: 100%; aspect-ratio: 1/1; background-color: #333;
+            border-radius: 10px; overflow: hidden; margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .album-art img { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* TEXTO DESLIZANTE (MARQUEE) */
+        .marquee-container {
+            overflow: hidden;
+            white-space: nowrap;
+            width: 100%;
+            margin-bottom: 5px;
+        }
+        .marquee-text {
+            display: inline-block;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+            padding-left: 100%; /* Começa escondido na direita */
+            animation: deslizar 12s linear infinite; /* 12s é a velocidade, mude se quiser mais rápido/lento */
+        }
+        @keyframes deslizar {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+        
+        .song-info p { font-size: 14px; color: #b3b3b3; margin: 0 0 20px 0; }
+        
+        /* PLAYER FUNCIONAL */
+        .progress-bar {
+            width: 100%; height: 4px; background-color: #4f4f4f;
+            border-radius: 2px; margin-bottom: 10px; cursor: pointer; position: relative;
+        }
+        .progress-fill {
+            width: 0%; height: 100%; background-color: white; border-radius: 2px;
+        }
+        .time-info {
+            display: flex; justify-content: space-between;
+            font-size: 12px; color: #b3b3b3; margin-bottom: 20px;
+        }
+        .controls {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; font-size: 20px;
+        }
+        .play-btn {
+            width: 60px; height: 60px; background-color: white; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            color: black; font-size: 24px; cursor: pointer;
+        }
+        /* TAMANHO DOS ÍCONES DO PLAYER */
+        .control-icon {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            cursor: pointer;
+            opacity: 0.7; /* Deixa um pouco transparente igual ao Spotify */
+        }
+        .control-icon:hover {
+            opacity: 1; /* Fica 100% visível ao passar o dedo/mouse */
+        }
+        .control-icon-active {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            cursor: pointer;
+            /* Se quiser que o ícone de aleatório fique verdezinho, é só usar a imagem já verde */
+        }
+        .play-btn img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+        }
+        /* SEÇÕES E CARDS */
+        .section-card { background-color: #242424; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+        .section-card h2 { font-size: 18px; margin: 0 0 10px 0; }
+        .section-card p { color: #b3b3b3; font-size: 14px; margin: 0 0 20px 0; }
+        
+        /* CONTADOR */
+        .counter-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .counter-box { background-color: #121212; padding: 15px 5px; border-radius: 8px; text-align: center; }
+        .counter-number { font-size: 20px; font-weight: bold; display: block; }
+        .counter-label { font-size: 11px; color: #b3b3b3; }
+        
+        /* MENSAGEM */
+        .message-card { background-color: #cc252c; border-radius: 10px; padding: 20px; color: white; margin-bottom: 20px; }
+        .message-card h2 { font-size: 16px; margin: 0 0 15px 0; }
+        .message-text { font-size: 22px; font-weight: bold; line-height: 1.2; margin: 0 0 20px 0; }
+        .btn-message { background-color: white; color: black; padding: 10px 20px; border-radius: 20px; border: none; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="header">
+        <span>⌄</span>
+        <span>Você é minha música</span>
+        <span>⋮</span>
+    </div>
+
+    <div class="album-art">
+        <img src="nos/nos1.jpeg" alt="Foto do casal" id="foto-principal">
+    </div>
+
+    <div class="song-info">
+        <div class="marquee-container">
+            <div class="marquee-text">Baco Exu do Blues - Samba in Paris [ft. Gloria Groove]</div>
+        </div>
+        <p>BACO EXU DO BLUES</p>
+    </div>
+
+    <audio id="musica-fundo">
+        <source src="nos/SIP.mp3" type="audio/mpeg">
+        Seu navegador não suporta áudio.
+    </audio>
+
+    <div class="progress-bar" id="barra-fundo" onclick="avancarMusica(event)">
+        <div class="progress-fill" id="barra-progresso"></div>
+    </div>
+    <div class="time-info">
+        <span id="tempo-atual">0:00</span>
+        <span id="tempo-total">0:00</span>
+    </div>
+    <div class="controls">
+        <span style="color: #1db954;">🔀</span> <span style="color: #b3b3b3;">⏮</span>
+        <div class="play-btn" id="btn-play" onclick="tocarPausar()">▶</div>
+        <span style="color: #b3b3b3;">⏭</span>
+        <span style="color: #b3b3b3;">🔁</span>
+    </div>
+
+    <div class="section-card">
+        <h2>Sobre o casal</h2>
+        <img src="nos/nos2.jpeg" alt="Foto 2" style="width: 100%; border-radius: 8px; margin-bottom: 15px;">
+        <h2>Alessandro e Vitória</h2>
+        <p>Nos amando desde <span id="ano-inicio">2022</span></p>
+        
+        <div class="counter-grid">
+            <div class="counter-box"><span class="counter-number" id="anos">0</span><span class="counter-label">Anos</span></div>
+            <div class="counter-box"><span class="counter-number" id="meses">0</span><span class="counter-label">Meses</span></div>
+            <div class="counter-box"><span class="counter-number" id="dias">0</span><span class="counter-label">Dias</span></div>
+            <div class="counter-box"><span class="counter-number" id="horas">0</span><span class="counter-label">Horas</span></div>
+            <div class="counter-box"><span class="counter-number" id="minutos">0</span><span class="counter-label">Minutos</span></div>
+            <div class="counter-box"><span class="counter-number" id="segundos">0</span><span class="counter-label">Segundos</span></div>
+        </div>
+    </div>
+
+    <div class="message-card">
+        <h2>Mensagem especial</h2>
+        <div id="mensagem-curta" class="message-text">
+            Não importa onde estejamos, desde que você esteja comigo...
+        </div>
+        <div id="mensagem-completa" class="message-text" style="display: none;">
+            Não importa onde estejamos, desde que você esteja comigo. Porque é no som da sua risada e no calor do seu abraço que encontro o que muitos chamam de lar. Você é meu lugar favorito no mundo.
+
+        </div>
+        <button class="btn-message" id="btn-msg" onclick="expandirMensagem()">Ler tudo</button>
+    </div>
+
+    <div class="section-card" style="margin-bottom: 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 style="margin: 0;">Conquistas</h2>
+            <a href="#" onclick="abrirConquistas(event)" style="color: #1db954; font-size: 14px; text-decoration: none; font-weight: bold;">Ver todas</a>
+        </div>
+        <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px;">
+            <div style="min-width: 65px; height: 65px; background-color: #121212; border-radius: 8px; border: 1px solid #ffd700; display: flex; justify-content: center; align-items: center; font-size: 24px;">📸</div>
+            <div style="min-width: 65px; height: 65px; background-color: #121212; border-radius: 8px; border: 1px solid #9d4edd; display: flex; justify-content: center; align-items: center; font-size: 24px;">🎵</div>
+            <div style="min-width: 65px; height: 65px; background-color: #121212; border-radius: 8px; border: 1px solid #ff4d4d; display: flex; justify-content: center; align-items: center; font-size: 24px;">🧱</div>
+            <div style="min-width: 65px; height: 65px; background-color: #121212; border-radius: 8px; border: 1px solid #00b4d8; display: flex; justify-content: center; align-items: center; font-size: 24px;">❤️</div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-conquistas" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;">
+    <div style="background-color: #242424; width: 100%; max-width: 360px; border-radius: 15px; padding: 20px; color: white; position: relative;">
+        <button onclick="fecharConquistas()" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #b3b3b3; font-size: 20px; cursor: pointer;">✕</button>
+        <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 22px; text-align: center;">O que conquistamos juntos</h2>
+        <div style="display: flex; flex-direction: column; gap: 15px; max-height: 60vh; overflow-y: auto;">
+            
+            <div style="display: flex; align-items: center; gap: 15px; background-color: #121212; padding: 12px; border-radius: 10px;">
+                <div style="font-size: 30px;">🚗</div>
+                <div>
+                    <h4 style="margin: 0 0 5px 0; font-size: 16px;">Nossos Carros</h4>
+                    <p style="margin: 0; font-size: 13px; color: #b3b3b3;">As melhores playlists tocando no som do carro e em nossos rolês.</p>
+                </div>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 15px; background-color: #121212; padding: 12px; border-radius: 10px;">
+                <div style="font-size: 30px;">🎵</div>
+                <div>
+                    <h4 style="margin: 0 0 5px 0; font-size: 16px;">Ínumeras festas</h4>
+                    <p style="margin: 0; font-size: 13px; color: #b3b3b3;">Registramos nossos melhores momentos.</p>
+                </div>
+                
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- LÓGICAS DO APP ---
+    const musica = document.getElementById('musica-fundo');
+    const btnPlay = document.getElementById('btn-play');
+    const barraProgresso = document.getElementById('barra-progresso');
+    const tempoAtual = document.getElementById('tempo-atual');
+    const tempoTotal = document.getElementById('tempo-total');
+    const barraFundo = document.getElementById('barra-fundo');
+
+    function tocarPausar() {
+        if (musica.paused) {
+            musica.play(); btnPlay.innerText = '⏸';
+        } else {
+            musica.pause(); btnPlay.innerText = '▶';
+        }
+    }
+
+    musica.addEventListener('timeupdate', () => {
+        const progresso = (musica.currentTime / musica.duration) * 100;
+        barraProgresso.style.width = progresso + '%';
+        tempoAtual.innerText = formatarTempo(musica.currentTime);
+    });
+
+    musica.addEventListener('loadedmetadata', () => {
+        tempoTotal.innerText = formatarTempo(musica.duration);
+    });
+
+    function formatarTempo(segundos) {
+        if (isNaN(segundos)) return "0:00";
+        const min = Math.floor(segundos / 60);
+        const seg = Math.floor(segundos % 60);
+        return min + ':' + (seg < 10 ? '0' : '') + seg;
+    }
+
+    function avancarMusica(event) {
+        const larguraTotal = barraFundo.clientWidth;
+        const cliqueX = event.offsetX;
+        const porcentagem = cliqueX / larguraTotal;
+        musica.currentTime = porcentagem * musica.duration;
+    }
+
+    const dataInicio = new Date('2022-06-24T12:00:00'); 
+    document.getElementById('ano-inicio').innerText = dataInicio.getFullYear();
+
+    function atualizarContador() {
+        const agora = new Date();
+        let diferenca = agora - dataInicio;
+        const segTotais = Math.floor(diferenca / 1000);
+        const minTotais = Math.floor(segTotais / 60);
+        const horTotais = Math.floor(minTotais / 60);
+        const diasTotais = Math.floor(horTotais / 24);
+
+        document.getElementById('anos').innerText = Math.floor(diasTotais / 365);
+        document.getElementById('meses').innerText = Math.floor((diasTotais % 365) / 30);
+        document.getElementById('dias').innerText = (diasTotais % 365) % 30;
+        document.getElementById('horas').innerText = horTotais % 24;
+        document.getElementById('minutos').innerText = minTotais % 60;
+        document.getElementById('segundos').innerText = segTotais % 60;
+    }
+    setInterval(atualizarContador, 1000);
+    atualizarContador();
+
+    function expandirMensagem() {
+        const msgCurta = document.getElementById('mensagem-curta');
+        const msgCompleta = document.getElementById('mensagem-completa');
+        const botao = document.getElementById('btn-msg');
+        if (msgCompleta.style.display === 'none') {
+            msgCompleta.style.display = 'block'; msgCurta.style.display = 'none'; botao.innerText = 'Mostrar menos';
+        } else {
+            msgCompleta.style.display = 'none'; msgCurta.style.display = 'block'; botao.innerText = 'Ler tudo';
+        }
+    }
+
+    function abrirConquistas(event) {
+        event.preventDefault(); document.getElementById('modal-conquistas').style.display = 'flex';
+    }
+    function fecharConquistas() {
+        document.getElementById('modal-conquistas').style.display = 'none';
+    }
+</script>
+
+</body>
+</html>
